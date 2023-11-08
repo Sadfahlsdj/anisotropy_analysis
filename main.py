@@ -15,18 +15,24 @@ from sklearn.linear_model import LinearRegression
 
 # scatter plot and simple linear regression
 def regress(xList, yList):
+
     lRegressor = LinearRegression()
     xList2d = np.array(xList).reshape((-1, 1))
-    lRegressor.fit(xList2d, yList)
+    lRegressor.fit(xList2d, list(yList))
 
-    #yPred = lRegressor.predict([[6.5]])
+    yPred = lRegressor.predict(xList2d)
 
-    plt.scatter(xList, yList)
-    #plt.plot(xList, yPred, color='red')
+    plt.scatter(list(xList), list(yList))
+    plt.plot(xList, yPred, color='red')
     plt.show()
 
 def extract(l, index):
+    #relevant sets of data are in columns not rows, this makes them easier to parse
     return (item[index] for item in l)
+
+def numericCheck(l):
+    # certain lines of data are not being detected as having NH or SP, hope this helps
+    return not all(str(s).strip('-').replace('.', '').isdigit() for s in l)
 
 
 
@@ -37,7 +43,7 @@ nPentaneCount, cyclopentaneCount, nHexaneCount, cyclohexaneCount, nHeptaneCount 
 #will have a different list for each type of solvent
 
 if __name__ == '__main__':
-    with open('chemData.csv') as file:
+    with open('chemDataModified.csv') as file:
         csv_reader = csv.reader(file, delimiter=',')
         data_list = list(csv_reader)
 
@@ -68,33 +74,33 @@ if __name__ == '__main__':
     SPMarker, NHMarker = 0, 0
     for l in data_list:
         if "SP" in l:
-            print(f"SP found with id {l[0]}")
+            #print(f"SP found with id {l[0]}")
             SPList[SPMarker] = [l[1], l[2], l[3]]
             SPMarker += 1
             data_list.remove(l)
         elif "NH" in l:
-            print(f"NH found with id {l[0]}")
+            #print(f"NH found with id {l[0]}")
             NHList[NHMarker] = [l[1], l[2], l[3]]
             NHMarker += 1
             data_list.remove(l)
     # test print
-    print(f"SP List: {SPList}")
-    print(f"NH List: {NHList}")
+    # print(f"SP List: {SPList}")
+    # print(f"NH List: {NHList}")
 
 
     # creating each solvent's list
     # each will contain concentration, curing time, anisotropy average, volume fraction, modulus
-    nPentaneList = [['0' for i in range(5)] for j in range(nPentaneCount)]
-    cyclopentaneList = [['0' for i in range(5)] for j in range(cyclopentaneCount)]
-    nHexaneList = [['0' for i in range(5)] for j in range(nHexaneCount)]
-    cyclohexaneList = [['0' for i in range(5)] for j in range(cyclohexaneCount)]
-    nHeptaneList = [['0' for i in range(5)] for j in range(nHeptaneCount)]
+    nPentaneList = [[0 for i in range(5)] for j in range(nPentaneCount)]
+    cyclopentaneList = [[0 for i in range(5)] for j in range(cyclopentaneCount)]
+    nHexaneList = [[0 for i in range(5)] for j in range(nHexaneCount)]
+    cyclohexaneList = [[0 for i in range(5)] for j in range(cyclohexaneCount)]
+    nHeptaneList = [[0 for i in range(5)] for j in range(nHeptaneCount)]
 
     # separating main list into different ones by solvent
     solventMarkers = [0, 0, 0, 0, 0] #nPentane, cyclopentane, nHexane, cyclohexane, nHeptane
     #print(data_list)
     for l in data_list[1:]:
-        print(l)
+        #print(l)
         listToAdd = [float(l[2]), float(l[3]), float(l[4]), float(l[5]), float(l[6])]
         #concentration, curing time, anisotropy average, volume fraction, modulus in order
         if l[1] == "n-Pentane":
@@ -113,13 +119,15 @@ if __name__ == '__main__':
             nHeptaneList[solventMarkers[4]] = listToAdd
             solventMarkers[4] += 1
 
+    """
+    test prints:
     print(f"nPentane List: {nPentaneList}")
     print(f"cyclopentane List: {cyclopentaneList}")
     print(f"nHexane List: {nHexaneList}")
     print(f"cyclohexane List: {cyclohexaneList}")
-    print(f"nHeptane List: {nHeptaneList}")
+    print(f"nHeptane List: {nHeptaneList}")"""
 
-    regress(extract(nPentaneList, 0), extract(nPentaneList, 2))
+    regress(list(extract(nPentaneList, 0)), list(extract(nPentaneList, 2)))
 
 
 
