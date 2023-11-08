@@ -1,6 +1,6 @@
 """F = frontal polymerization
 SP = spontaneous polymerization (no output values)
-NH = no holes (no polymerization"""
+NH = no holes (no polymerization)"""
 
 import csv
 import numpy as np
@@ -11,11 +11,12 @@ from sklearn.linear_model import LinearRegression
 # 0: sample (sample number, no numerical meaning)
 # 1: solvent, 2: concentration, 3: curing time (input variables)
 # 4: anisotropy average, 5: volume fraction, 6: modulus (output variables)
-# 7: polymerization type (f is good, SP or NH should be moved elsewhere)
+# 7: polymerization type (F is good, SP has its own list)
+# index 7 can be F and outputs are still NH, this has its own list too
 
 # scatter plot and simple linear regression
 def regress(xList, yList):
-
+    #having a function to do simple linear regression makes it less repetitive
     lRegressor = LinearRegression()
     xList2d = np.array(xList).reshape((-1, 1))
     lRegressor.fit(xList2d, list(yList))
@@ -32,14 +33,13 @@ def extract(l, index):
 
 def numericCheck(l):
     # certain lines of data are not being detected as having NH or SP, hope this helps
+    #CURRENTLY UNUSED and likely nonfunctional
     return not all(str(s).strip('-').replace('.', '').isdigit() for s in l)
 
 
 
 #solvent types:
 #n-Pentane, cyclopentane, n-hexane, cyclohexane, n-heptane
-SPcount, NHcount = 0, 0
-nPentaneCount, cyclopentaneCount, nHexaneCount, cyclohexaneCount, nHeptaneCount = 0, 0, 0, 0, 0
 #will have a different list for each type of solvent
 
 if __name__ == '__main__':
@@ -47,25 +47,10 @@ if __name__ == '__main__':
         csv_reader = csv.reader(file, delimiter=',')
         data_list = list(csv_reader)
 
-    for l in data_list: # counting how large different arrays need to be
-        if l[1] == "n-Pentane":
-            nPentaneCount += 1
-        elif l[1] == "cyclopentane":
-            cyclopentaneCount += 1
-        elif l[1] == "n-hexane":
-            nHexaneCount += 1
-        elif l[1] == "cyclohexane":
-            cyclohexaneCount += 1
-        elif l[1] == "n-heptane":
-            nHeptaneCount += 1
-        if "SP" in l:
-            SPcount += 1
-        elif "NH" in l:
-            NHcount += 1
 
     # creating separate lists for SP and NH
-    SPList = [['0' for i in range(3)] for j in range(SPcount)] #length of inner list is 3 because we are only adding input variables
-    NHList = [['0' for i in range(3)] for j in range(NHcount)]
+    SPList = []
+    NHList = []
     #NHList is the ones with frontal polymerization but no numerical outputs
     #SPList is the ones with spontaneous polymerization and no numerical outputs
 
@@ -75,13 +60,11 @@ if __name__ == '__main__':
     for l in data_list:
         if "SP" in l:
             #print(f"SP found with id {l[0]}")
-            SPList[SPMarker] = [l[1], l[2], l[3]]
-            SPMarker += 1
+            SPList.append([l[1], l[2], l[3]])
             data_list.remove(l)
         elif "NH" in l:
             #print(f"NH found with id {l[0]}")
-            NHList[NHMarker] = [l[1], l[2], l[3]]
-            NHMarker += 1
+            NHList.append([l[1], l[2], l[3]])
             data_list.remove(l)
     # test print
     # print(f"SP List: {SPList}")
@@ -90,44 +73,45 @@ if __name__ == '__main__':
 
     # creating each solvent's list
     # each will contain concentration, curing time, anisotropy average, volume fraction, modulus
-    nPentaneList = [[0 for i in range(5)] for j in range(nPentaneCount)]
-    cyclopentaneList = [[0 for i in range(5)] for j in range(cyclopentaneCount)]
-    nHexaneList = [[0 for i in range(5)] for j in range(nHexaneCount)]
-    cyclohexaneList = [[0 for i in range(5)] for j in range(cyclohexaneCount)]
-    nHeptaneList = [[0 for i in range(5)] for j in range(nHeptaneCount)]
+    #nPentaneList = [[0 for i in range(5)] for j in range(nPentaneCount)]
+    nPentaneList = []
+    cyclopentaneList = []
+    nHexaneList = []
+    cyclohexaneList = []
+    nHeptaneList = []
 
     # separating main list into different ones by solvent
-    solventMarkers = [0, 0, 0, 0, 0] #nPentane, cyclopentane, nHexane, cyclohexane, nHeptane
     #print(data_list)
     for l in data_list[1:]:
         #print(l)
         listToAdd = [float(l[2]), float(l[3]), float(l[4]), float(l[5]), float(l[6])]
         #concentration, curing time, anisotropy average, volume fraction, modulus in order
         if l[1] == "n-Pentane":
-            nPentaneList[solventMarkers[0]] = listToAdd
-            solventMarkers[0] += 1
+            #nPentaneList[solventMarkers[0]] = listToAdd
+            nPentaneList.append(listToAdd)
         elif l[1] == "cyclopentane":
-            cyclopentaneList[solventMarkers[1]] = listToAdd
-            solventMarkers[1] += 1
+            cyclopentaneList.append(listToAdd)
         elif l[1] == "n-hexane":
-            nHexaneList[solventMarkers[2]] = listToAdd
-            solventMarkers[2] += 1
+            nHexaneList.append(listToAdd)
         elif l[1] == "cyclohexane":
-            cyclohexaneList[solventMarkers[3]] = listToAdd
-            solventMarkers[3] += 1
+            cyclohexaneList.append(listToAdd)
         elif l[1] == "n-heptane":
-            nHeptaneList[solventMarkers[4]] = listToAdd
-            solventMarkers[4] += 1
+            nHeptaneList.append(listToAdd)
 
-    """
-    test prints:
-    print(f"nPentane List: {nPentaneList}")
+    #test prints:
+    """print(f"nPentane List: {nPentaneList}")
     print(f"cyclopentane List: {cyclopentaneList}")
     print(f"nHexane List: {nHexaneList}")
     print(f"cyclohexane List: {cyclohexaneList}")
     print(f"nHeptane List: {nHeptaneList}")"""
 
-    regress(list(extract(nPentaneList, 0)), list(extract(nPentaneList, 2)))
+
+    #make sure to wrap both input lists in list()
+    #extract(list, index) to get relevant index - sets of data are in columns
+    #concentration, curing time, anisotropy average, volume fraction, modulus in order
+    #neat but unlikely to give relevant results, we need results from input variables in tandem
+
+    regress(list(extract(nPentaneList, 1)), list(extract(nPentaneList, 2)))
 
 
 
