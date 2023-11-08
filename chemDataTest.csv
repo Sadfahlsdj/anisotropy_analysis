@@ -1,0 +1,5 @@
+sample,solvent,concentration,curing time,anisotropy average,Volume fraction,Modulus (MPa),Polymerization type,,,
+1111,n-Pentane,5,0,0.228,0.664,677.86,F,,,
+1251,n-Pentane,10,120,NH,NH,NH,SP,,,
+1111,n-Pentane,5,0,0.228,0.664,677.86,F,,,
+1252,n-Pentane,30,120,NH,NH,NH,SP,,,

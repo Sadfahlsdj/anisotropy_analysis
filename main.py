@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
 #data columns in order:
 # 0: sample (sample number, no numerical meaning)
 # 1: solvent, 2: concentration, 3: curing time (input variables)
@@ -14,18 +15,25 @@ from sklearn.linear_model import LinearRegression
 # 7: polymerization type (F is good, SP has its own list)
 # index 7 can be F and outputs are still NH, this has its own list too
 
-# scatter plot and simple linear regression
+# scatter plot, linear regression, and forest regression
 def regress(xList, yList):
-    #having a function to do simple linear regression makes it less repetitive
     lRegressor = LinearRegression()
-    xList2d = np.array(xList).reshape((-1, 1))
-    lRegressor.fit(xList2d, list(yList))
+    fRegressor = RandomForestRegressor(100, random_state=0)
+    xList2d = np.array(xList).reshape((-1, 1)) #needed for regressors
+    lRegressor.fit(xList2d, yList) #trains linear regressor
+    fRegressor.fit(xList2d, yList) #trains forest regressor
 
-    yPred = lRegressor.predict(xList2d)
+    xGrid = np.arange(min(xList), max(xList), 0.01)
+    xGrid = xGrid.reshape((len(xGrid)), 1) #creates a suitable x axis
 
-    plt.scatter(list(xList), list(yList))
-    plt.plot(xList, yPred, color='red')
+    yPred = lRegressor.predict(xGrid)
+    yPredForest = fRegressor.predict(xGrid) #trains regressors on the x axis
+
+    plt.scatter(list(xList), list(yList)) #scatter plot
+    plt.plot(xGrid, yPred, color='red') #linear regression
+    plt.plot(xGrid, yPredForest, color='green') #forest regression
     plt.show()
+
 
 def extract(l, index):
     #relevant sets of data are in columns not rows, this makes them easier to parse
@@ -43,7 +51,7 @@ def numericCheck(l):
 #will have a different list for each type of solvent
 
 if __name__ == '__main__':
-    with open('chemDataModified.csv') as file:
+    with open('chemData.csv') as file:
         csv_reader = csv.reader(file, delimiter=',')
         data_list = list(csv_reader)
 
@@ -56,19 +64,28 @@ if __name__ == '__main__':
 
 
     # putting rows with SP and NH in respective lists, removing from main list
-    SPMarker, NHMarker = 0, 0
-    for l in data_list:
+    #print(len(data_list))
+
+    linesToRemove = []
+    dataLen = len(data_list)
+    for i in range(dataLen):
+        l = data_list[i]
         if "SP" in l:
-            #print(f"SP found with id {l[0]}")
+            print(f"SP found with id {l[0]}")
             SPList.append([l[1], l[2], l[3]])
-            data_list.remove(l)
+            #data_list.remove(l)
+            linesToRemove.append(l)
         elif "NH" in l:
-            #print(f"NH found with id {l[0]}")
+            print(f"NH found with id {l[0]}")
             NHList.append([l[1], l[2], l[3]])
-            data_list.remove(l)
+            #data_list.remove(l)
+            linesToRemove.append(l)
     # test print
     # print(f"SP List: {SPList}")
     # print(f"NH List: {NHList}")
+
+    for i in linesToRemove:
+        data_list.remove(i)
 
 
     # creating each solvent's list

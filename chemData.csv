@@ -8,7 +8,7 @@ sample,solvent,concentration,curing time,anisotropy average,Volume fraction,Modu
 1221,n-Pentane,10,30,0.658,0.772,1158.4,F,,,
 1231,n-Pentane,10,60,0.892,0.672,906.93,F,,,
 1241,n-Pentane,10,90,0.890,0.306,762.21,F,,,
-1251,n-pentane,10,120,NH,NH,NH,SP,,,
+1251,n-Pentane,10,120,NH,NH,NH,SP,,,
 1311,n-Pentane,20,0,0.344,0.422,0.00425,F,,,
 1321,n-Pentane,20,30,0.532,0.233,138.17,F,,,
 1331,n-Pentane,20,60,0.072,0.302,0.00156,F,,,
