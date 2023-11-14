@@ -6,9 +6,13 @@ import csv
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from sklearn.linear_model import LinearRegression
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import roc_curve, auc
 import scipy
 import inspect
 #data columns in order:
@@ -18,8 +22,9 @@ import inspect
 # 7: polymerization type (F is good, SP has its own list)
 # index 7 can be F and outputs are still NH, this has its own list too
 
+#excelData.csv is the csv without trailing lines
 
-
+# hardcoded for axis labels
 inputNames = ["concentration", "curing time"]
 outputNames = ["anisotropy average", "volume fraction", "modulus"]
 
@@ -27,10 +32,12 @@ def retrieve_name(var):
     # used to get variable name so I can put it in the title
     # takes in a variable, returns its name
     # ex: retrieve_name(solventList) = 'solventList'
+    # CURRENTLY UNUSED
     callers_local_vars = inspect.currentframe().f_back.f_locals.items()
     return [var_name for var_name, var_val in callers_local_vars if var_val is var]
 
 # scatter plot, linear regression, and forest regression
+# called in regressAll
 def regress(inputList, solventName, xIndex, yIndex, xLabel=" ", yLabel =" "):
     xList = list(extract(inputList, xIndex)) # x axis stuff
     yList = list(extract(inputList, yIndex)) # y axis stuff
@@ -55,9 +62,48 @@ def regress(inputList, solventName, xIndex, yIndex, xLabel=" ", yLabel =" "):
     plt.title(f"{xLabel} against {yLabel} in {solventName}")
     plt.show()
 
+def forestRegress(inputList, targetColumn):
+    #targetColumn is the name of desired output, must be exact
+    inputList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    convert_dict = {'anisotropy-average': float,
+                    'volume-fraction': float,
+                    'modulus': float
+                    }
+
+    # inputList = inputList.astype(convert_dict)
+
+    inputListEmpty = inputList.isnull().sum()
+    NAs = pd.concat([inputListEmpty], axis=1, keys=["Train"])
+    NAs[NAs.sum(axis=1) > 0]
+
+
+
+    """for col in inputList.dtypes[inputList.dtypes == "string"].index:
+        for_dummy = inputList.pop(col)
+        inputList = pd.concat([inputList, pd.get_dummies(for_dummy, prefix=col)], axis=1)"""
+
+    inputList.head()
+
+    labels = inputList.pop(targetColumn)
+    x_train, x_test, y_train, y_test = train_test_split(inputList, labels, test_size=0.25)
+    rf = RandomForestClassifier()
+    rf.fit(x_train, y_train)
+    y_pred = rf.predict(x_test)
+
+    print(excelData.to_string())
+
+    print(f"{inputList['concentration'].head()}")
+    print(f"{inputList['curing-time'].head()}")
+    #print(f"{inputList['anisotropy-average'].head()}")
+    print(f"{inputList['modulus'].head()}")
+    print(f"{inputList['volume-fraction'].head()}")
+
+    false_positive_rate, true_positive_rate, thresholds = roc_curve(y_test, y_pred)
+    roc_auc = auc(false_positive_rate, true_positive_rate)
+    print(f"roc_auc value: {roc_auc}")
 
 def extract(l, index):
-    #relevant sets of data are in columns not rows, this makes them easier to parse
+    # relevant sets of data are in columns not rows, this makes them easier to parse
     return (item[index] for item in l)
 def regressAll(solventList, solventName):
     # index 0 and 1 are inputs, 2, 3, 4 are outputs
@@ -94,6 +140,13 @@ if __name__ == '__main__':
         csv_reader = csv.reader(file, delimiter=',')
         data_list = list(csv_reader)
 
+    excelData = pd.read_csv("excelData.csv", encoding='latin-1')
+    #print(excelData.shape)
+
+    excelData = excelData[excelData['anisotropy-average'] != "NH"]
+
+    # removes all lines that would go into SP or NH
+
 
     # creating separate lists for SP and NH
     SPList = []
@@ -116,12 +169,12 @@ if __name__ == '__main__':
             #print(f"NH found with id {l[0]}")
             NHList.append([l[1], l[2], l[3]])
             linesToRemove.append(l)
-    # test print
-    # print(f"SP List: {SPList}")
-    # print(f"NH List: {NHList}")
-
     for i in linesToRemove:
         data_list.remove(i) # removing every "marked" line
+
+
+
+
 
 
     # creating each solvent's list
@@ -168,12 +221,16 @@ if __name__ == '__main__':
     xRInput = 1 #x regression input
     yRInput = 4 #y regression input
 
-
+    """
     regressAll(nPentaneList, "n-pentane")
     regressAll(cyclopentaneList, "cyclopentane")
     regressAll(nHexaneList, "n-hexane")
     regressAll(cyclohexaneList, "cyclohexane")
-    regressAll(nHeptaneList, "n-heptane")
+    regressAll(nHeptaneList, "n-heptane")"""
+
+    forestRegress(excelData, "anisotropy-average")
+
+    #print(excelData.to_string())
 
 
     """
