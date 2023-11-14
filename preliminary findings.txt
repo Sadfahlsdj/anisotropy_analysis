@@ -1,0 +1,32 @@
+R squared values of 1 variable against 1 variable as of 13 November 2023
+
+R squared value of x value concentration and y value anisotropy average using n-pentane is 0.391, indicating little to no statistical significance
+R squared value of x value concentration and y value volume fraction using n-pentane is 0.322, indicating little to no statistical significance
+R squared value of x value concentration and y value modulus using n-pentane is 0.745, indicating a likely correlation
+R squared value of x value curing time and y value anisotropy average using n-pentane is 0.405, indicating a possible correlation
+R squared value of x value curing time and y value volume fraction using n-pentane is 0.003, indicating little to no statistical significance
+R squared value of x value curing time and y value modulus using n-pentane is 0.096, indicating little to no statistical significance
+R squared value of x value concentration and y value anisotropy average using cyclopentane is 0.002, indicating little to no statistical significance
+R squared value of x value concentration and y value volume fraction using cyclopentane is 0.362, indicating little to no statistical significance
+R squared value of x value concentration and y value modulus using cyclopentane is 0.304, indicating little to no statistical significance
+R squared value of x value curing time and y value anisotropy average using cyclopentane is 0.077, indicating little to no statistical significance
+R squared value of x value curing time and y value volume fraction using cyclopentane is 0.013, indicating little to no statistical significance
+R squared value of x value curing time and y value modulus using cyclopentane is 0.231, indicating little to no statistical significance
+R squared value of x value concentration and y value anisotropy average using n-hexane is 0.332, indicating little to no statistical significance
+R squared value of x value concentration and y value volume fraction using n-hexane is 0.81, indicating a likely correlation
+R squared value of x value concentration and y value modulus using n-hexane is 0.621, indicating a possible correlation
+R squared value of x value curing time and y value anisotropy average using n-hexane is 0.314, indicating little to no statistical significance
+R squared value of x value curing time and y value volume fraction using n-hexane is 0.03, indicating little to no statistical significance
+R squared value of x value curing time and y value modulus using n-hexane is 0.01, indicating little to no statistical significance
+R squared value of x value concentration and y value anisotropy average using cyclohexane is 0.005, indicating little to no statistical significance
+R squared value of x value concentration and y value volume fraction using cyclohexane is 0.514, indicating a possible correlation
+R squared value of x value concentration and y value modulus using cyclohexane is 0.216, indicating little to no statistical significance
+R squared value of x value curing time and y value anisotropy average using cyclohexane is 0.222, indicating little to no statistical significance
+R squared value of x value curing time and y value volume fraction using cyclohexane is 0.025, indicating little to no statistical significance
+R squared value of x value curing time and y value modulus using cyclohexane is 0.107, indicating little to no statistical significance
+R squared value of x value concentration and y value anisotropy average using n-heptane is 0.002, indicating little to no statistical significance
+R squared value of x value concentration and y value volume fraction using n-heptane is 0.727, indicating a likely correlation
+R squared value of x value concentration and y value modulus using n-heptane is 0.678, indicating a possible correlation
+R squared value of x value curing time and y value anisotropy average using n-heptane is 0.108, indicating little to no statistical significance
+R squared value of x value curing time and y value volume fraction using n-heptane is 0.013, indicating little to no statistical significance
+R squared value of x value curing time and y value modulus using n-heptane is 0.009, indicating little to no statistical significance
