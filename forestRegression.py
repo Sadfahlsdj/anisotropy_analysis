@@ -135,5 +135,5 @@ if __name__ == "__main__":
     # forestRegress(parsedData, "anisotropy-average")
 
     # second argument is the output to generate a predicted vs actual graph for
-    # probably need to separate by solvent to get better results
+    # probably need to separate by solvent to get better result
     forest_regression(parsedData, 'modulus')
