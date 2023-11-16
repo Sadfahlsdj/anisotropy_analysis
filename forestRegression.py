@@ -56,10 +56,11 @@ import inspect
     #print(f"roc_auc value: {roc_auc}")
     """
 
-def forest_regression(df, outputName):
+def forest_regression(df, outputName, solventName):
     # xVars is concentration & curing time; yVars is anisotropy, volume fraction, and modulus
     xVars = df.drop(['anisotropy-average', 'volume-fraction', 'modulus', 'sample'], axis=1)
     yVars = df.drop(['concentration', 'curing-time', 'sample'], axis=1)
+    # test_size being 0.3 means that 70% of the data goes into train, which is needed
     xTrain, xValid, yTrain, yValid = train_test_split(xVars, yVars, test_size=0.3, random_state=42)
 
     # create regressor and train
@@ -85,55 +86,93 @@ def forest_regression(df, outputName):
     yPredGraph = yPred[outputName].tolist()
 
     plt.figure(figsize=(10, 10))
-    plt.scatter(yValidGraph, yPredGraph, color="red", label="Comparison between Actual and Predicted Data")
+    plt.scatter(yValidGraph, yPredGraph, color="red", label=f"Comparison between Actual and Predicted Data in {solventName}")
     plt.legend()
     plt.grid()
-    plt.title(f"Actual vs Predicted Values for {outputName}")
+    plt.title(f"Actual vs Predicted Values for {outputName} in {solventName}")
     plt.xlabel("Predicted data")
     plt.ylabel("Actual data")
     plt.show()
 
     # r^2, multioutput='raw_values' prints each separately which is what i want
     r2 = metrics.r2_score(yValid, yPred, multioutput='raw_values')
-    print(f"R squared score for this data set is {r2} for anisotropy, volume fraction, and modulus respectively")
+    print(f"R squared score for this data set is {r2} for anisotropy, volume fraction, and modulus respectively in {solventName}")
 
 
 if __name__ == "__main__":
     excelData = pd.read_csv("excelData.csv", encoding='latin-1')
     # print(excelData.shape)
 
-    # drops nonnumeric variables and any lines with NH or SP
+    # separating NH and SP data
+    # ideally i'd separate the two but there just isn't enough data
+
+    columnNames = excelData.columns
+    NHList = pd.DataFrame(columns=columnNames)
+    for index, row in excelData.iterrows():
+        if 'NH' in row['anisotropy-average']:
+            tempdf = pd.DataFrame([row])
+            # print(tempdf.to_string())
+            NHList = pd.concat([NHList, tempdf], ignore_index=True)
+
+
     excelData = excelData[excelData['anisotropy-average'] != "NH"]
+
+    # separating input list by solvent
+    columnNamesNew = excelData.columns
+    nPentaneList = pd.DataFrame(columns=columnNamesNew)
+    cycloPentaneList = pd.DataFrame(columns=columnNamesNew)
+    nHexaneList = pd.DataFrame(columns=columnNamesNew)
+    cycloHexaneList = pd.DataFrame(columns=columnNamesNew)
+    nHeptaneList = pd.DataFrame(columns=columnNamesNew)
+
+    for index, row in excelData.iterrows():
+        if row['solvent'] == 'n-Pentane':
+            tempdf = pd.DataFrame([row])
+            nPentaneList = pd.concat([nPentaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'cyclopentane':
+            tempdf = pd.DataFrame([row])
+            cycloPentaneList = pd.concat([cycloPentaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'n-hexane':
+            tempdf = pd.DataFrame([row])
+            nHexaneList = pd.concat([nHexaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'cyclohexane':
+            tempdf = pd.DataFrame([row])
+            cycloHexaneList = pd.concat([cycloHexaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'n-heptane':
+            tempdf = pd.DataFrame([row])
+            nHeptaneList = pd.concat([nHeptaneList, tempdf], ignore_index=True)
+
+    # drops nonnumeric variables
+    # probably a better way to do this to be honest
+
     excelData.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    nPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    cycloPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    nHexaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    cycloHexaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    nHeptaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+
 
     #print(excelData.to_string())
 
-    # all this below is because the regression accepts only ints, not float
-    # (float is continuous, which poses an issue apparently)
-
-    # cast to float so i can multiply
+    # cast all to float since output columns that had strings are type Object
     excelData = excelData.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
-
-    # multiply select columns by 1000
-    """excelData['concentration'] = excelData['concentration'] * 1000
-    excelData['curing-time'] = excelData['curing-time'] * 1000
-    excelData['anisotropy-average'] = excelData['anisotropy-average'] * 1000
-    excelData['modulus'] = excelData['modulus'] * 1000
-    excelData['volume-fraction'] = excelData['volume-fraction'] * 1000
-
-    # int cast to remove trailing 0s
-    excelData = excelData.astype({"anisotropy-average": int, "modulus": int, "volume-fraction": int})
-    """
-    # print(excelData.to_string())
+    nPentaneList = nPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    cycloPentaneList = cycloPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    nHexaneList = nHexaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    cycloHexaneList = cycloHexaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    nHeptaneList = nHeptaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
 
 
-    excelData.to_csv("chemDataParsed", encoding='utf-8', index=False)
+
+    # UNNECCESSARY NOW
+    # excelData.to_csv("chemDataParsed", encoding='utf-8', index=False)
     # exports parsed csv to a new csv, which is then read from
     # encoding is (probably) needed to make it work, index means that row index isn't included (good)
 
-    parsedData = pd.read_csv("chemDataParsed", encoding='latin-1')
+    # parsedData = pd.read_csv("nPentane", encoding='latin-1')
     # forestRegress(parsedData, "anisotropy-average")
 
     # second argument is the output to generate a predicted vs actual graph for
-    # probably need to separate by solvent to get better result
-    forest_regression(parsedData, 'modulus')
+    # third argument is solvent name, doesn't need to be exact it's only used for titling
+    forest_regression(nPentaneList, 'anisotropy-average', 'n-pentane')
