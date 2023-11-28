@@ -10,6 +10,7 @@ from sklearn.metrics import r2_score
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc
 from sklearn import metrics
+from sklearn import preprocessing
 
 import scipy
 import inspect
@@ -56,12 +57,22 @@ import inspect
     #print(f"roc_auc value: {roc_auc}")
     """
 
-def forest_regression(df, outputName, solventName):
-    # xVars is concentration & curing time; yVars is anisotropy, volume fraction, and modulus
-    # use first yVars for data split by solvent, second one for boiling point data
-    xVars = df.drop(['anisotropy-average', 'volume-fraction', 'modulus', 'sample'], axis=1)
-    # yVars = df.drop(['concentration', 'curing-time', 'sample'], axis=1)
-    yVars = df.drop(['boiling-point', 'concentration', 'curing-time', 'sample'], axis=1)
+def forest_regression(df, outputName, solventName, normalized=False):
+    # normalized is false by default, if it's true then the data set is modified to be normalized
+    # and the x and y data sets will draw from the normalized set
+    # rest of analysis happens as normal once the sets to be used are acquired
+
+    if normalized:
+        dfNormalized = preprocessing.normalize(df, axis=0) # axis=0 means it's done by column
+        dfscaled = pd.DataFrame(dfNormalized, columns=df.columns)
+        xVars = dfscaled.drop(['anisotropy-average', 'volume-fraction', 'modulus', 'sample'], axis=1)
+        yVars = dfscaled.drop(['boiling-point', 'concentration', 'curing-time', 'sample'], axis=1)
+    else:
+        # xVars is concentration & curing time; yVars is anisotropy, volume fraction, and modulus
+        # use first yVars for data split by solvent, second one for boiling point data
+        xVars = df.drop(['anisotropy-average', 'volume-fraction', 'modulus', 'sample'], axis=1)
+        # yVars = df.drop(['concentration', 'curing-time', 'sample'], axis=1)
+        yVars = df.drop(['boiling-point', 'concentration', 'curing-time', 'sample'], axis=1)
     # test_size being 0.3 means that 70% of the data goes into train, which is needed
     xTrain, xValid, yTrain, yValid = train_test_split(xVars, yVars, test_size=0.3, random_state=42)
 
@@ -87,20 +98,26 @@ def forest_regression(df, outputName, solventName):
     yValidGraph = yValid[outputName].tolist()
     yPredGraph = yPred[outputName].tolist()
 
+    # below is used for titles and the r2 print
+    normalizedString = ""
+    if normalized:
+        normalizedString = "with normalization"
+
     plt.figure(figsize=(10, 10))
     plt.scatter(yValidGraph, yPredGraph, color="red", label=f"Comparison between Actual and Predicted Data in {solventName}")
     plt.legend()
     plt.grid()
-    plt.title(f"Actual vs Predicted Values for {outputName} in {solventName}")
+    plt.title(f"Actual vs Predicted Values for {outputName} in {solventName} {normalizedString}")
     plt.xlabel("Predicted data")
     plt.ylabel("Actual data")
     plt.show()
 
     # r^2, multioutput='raw_values' prints each separately which is what i want
     r2 = metrics.r2_score(yValid, yPred, multioutput='raw_values')
+    np.around(r2, 5)
     r2total = metrics.r2_score(yValid, yPred)
     print(f"R squared score for this data set is {r2} for anisotropy, volume fraction, and modulus respectively in {solventName}")
-    print(f"Overall R squared score for this data set is {r2total}")
+    print(f"Overall R squared score for this data set is {r2total} {normalizedString}")
 
 if __name__ == "__main__":
     # excelData has solvent names, bPointData(boilingPointData) has boiling points
@@ -140,6 +157,7 @@ if __name__ == "__main__":
     # print(bPointData.to_string())
 
     # separating input list by solvent
+    # only used for non boiling point data
     columnNamesNew = excelData.columns
     nPentaneList = pd.DataFrame(columns=columnNamesNew)
     cycloPentaneList = pd.DataFrame(columns=columnNamesNew)
@@ -191,10 +209,13 @@ if __name__ == "__main__":
 
     # some modulus values are much smaller than the others
     # this modifies the data to get rid of them for testing
-    bPointData = bPointData[(bPointData['modulus']) >= 1]
+    # comment/uncomment the next line for different analyses--it's optional more or less
+    # bPointData = bPointData[(bPointData['modulus']) >= 1]
     # print(bPointData.to_string())
 
     # second argument is the output to generate a predicted vs actual graph for
+    # it needs to exactly match an output column name
     # third argument is solvent name, doesn't need to be exact it's only used for titling
     # if using bPointData, it uses all solvents
-    forest_regression(bPointData, 'modulus', 'all solvents overall')
+    # last input is whether to normalize or not, default is false so not having a fourth input will have it be falsed
+    forest_regression(bPointData, 'modulus', 'all solvents overall', True)

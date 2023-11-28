@@ -92,11 +92,11 @@ def forestRegress(inputList, targetColumn):
 
     print(excelData.to_string())
 
-    print(f"{inputList['concentration'].head()}")
-    print(f"{inputList['curing-time'].head()}")
+    #print(f"{inputList['concentration'].head()}")
+    #print(f"{inputList['curing-time'].head()}")
     #print(f"{inputList['anisotropy-average'].head()}")
-    print(f"{inputList['modulus'].head()}")
-    print(f"{inputList['volume-fraction'].head()}")
+    #print(f"{inputList['modulus'].head()}")
+    #print(f"{inputList['volume-fraction'].head()}")
 
     false_positive_rate, true_positive_rate, thresholds = roc_curve(y_test, y_pred)
     roc_auc = auc(false_positive_rate, true_positive_rate)
@@ -221,14 +221,14 @@ if __name__ == '__main__':
     xRInput = 1 #x regression input
     yRInput = 4 #y regression input
 
-    """
+
     regressAll(nPentaneList, "n-pentane")
     regressAll(cyclopentaneList, "cyclopentane")
     regressAll(nHexaneList, "n-hexane")
     regressAll(cyclohexaneList, "cyclohexane")
-    regressAll(nHeptaneList, "n-heptane")"""
+    regressAll(nHeptaneList, "n-heptane")
 
-    forestRegress(excelData, "anisotropy-average")
+    #forestRegress(excelData, "anisotropy-average")
 
     #print(excelData.to_string())
 
