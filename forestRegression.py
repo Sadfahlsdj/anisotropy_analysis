@@ -21,46 +21,21 @@ import inspect
 # 7: polymerization type (F is good, SP has its own list)
 # index 7 can be F and outputs are still NH, this has its own list too
 
-"""def forestRegress(inputList, targetColumn):
-    #targetColumn is the name of desired output, must be exact
-    inputListEmpty = inputList.isnull().sum()
-    NAs = pd.concat([inputListEmpty], axis=1, keys=["Train"])
-    NAs[NAs.sum(axis=1) > 0]
 
-    # following 3 lines should be commented
-    for col in inputList.dtypes[inputList.dtypes == "string"].index:
-        for_dummy = inputList.pop(col)
-        inputList = pd.concat([inputList, pd.get_dummies(for_dummy, prefix=col)], axis=1)
-
-    inputList.head()
-
-    labels = inputList[targetColumn]
-    x_train, x_test, y_train, y_test = train_test_split(inputList, labels, test_size=0.25)
-    rf = RandomForestClassifier()
-    rf.fit(x_train, y_train)
-    y_pred = rf.predict(x_test)
-
-    # print(inputList.to_string())
-
-    # following 5 lines are test prints, should be commented
-    print(f"{inputList['concentration'].head()}")
-    print(f"{inputList['curing-time'].head()}")
-    print(f"{inputList['anisotropy-average'].head()}")
-    print(f"{inputList['modulus'].head()}")
-    print(f"{inputList['volume-fraction'].head()}")
-    
-    #roc is meant for binary or otherwise categorical outputs
-    #not fit for this model
-
-    #false_positive_rate, true_positive_rate, thresholds = roc_curve(y_test, y_pred)
-    #roc_auc = auc(false_positive_rate, true_positive_rate)
-    #print(f"roc_auc value: {roc_auc}")
-    """
-
-def forest_regression(df, outputName, solventName, normalized=False):
+def forest_regression(df, outputName, solventName, normalized=False, predictionList=None):
     # normalized is false by default, if it's true then the data set is modified to be normalized
     # and the x and y data sets will draw from the normalized set
     # rest of analysis happens as normal once the sets to be used are acquired
+
+    # if predictionList exists, the entire input dataframe will be used to train
+    # and prediction will be ran on predictionList
+    # else, it will proceed as normal
+
+    if predictionList is not None:
+        testRatio = 0.01
+    else:
+        testRatio = 0.3 #determining how much of the input list is used to train
+
 
     if normalized:
         dfNormalized = preprocessing.normalize(df, axis=0) # axis=0 means it's done by column
@@ -74,50 +49,52 @@ def forest_regression(df, outputName, solventName, normalized=False):
         # yVars = df.drop(['concentration', 'curing-time', 'sample'], axis=1)
         yVars = df.drop(['boiling-point', 'concentration', 'curing-time', 'sample'], axis=1)
     # test_size being 0.3 means that 70% of the data goes into train, which is needed
-    xTrain, xValid, yTrain, yValid = train_test_split(xVars, yVars, test_size=0.3, random_state=42)
+    xTrain, xValid, yTrain, yValid = train_test_split(xVars, yVars, test_size=testRatio, random_state=42)
 
     # create regressor and train
     rg = RandomForestRegressor(n_estimators=100, random_state=42)
     rg.fit(xTrain, yTrain)
-    yPred = rg.predict(xValid)
+    if predictionList is not None:
+        predictionX = predictionList.drop(['anisotropy-average', 'volume-fraction', 'modulus', 'sample'], axis=1)
+        yPred = rg.predict(predictionX)
+        # predicts on predictionList's inputs
+    else:
+        yPred = rg.predict(xValid)
     # change datatype to make it easier to use
     yPred = pd.DataFrame(yPred, columns=['anisotropy-average', 'volume-fraction', 'modulus'])
 
-    """
-    anisotropyActual = yValid['anisotropy-average'].tolist()
-    volumeFractionActual = yValid['volume-fraction'].tolist()
-    modulusActual = yValid['modulus'].tolist()
+    # only generates graph and r2 if the same dataframe is used for test & train
+    # if a different one is used, exports a csv with outputs
+    if predictionList is not None:
+        yOverall = predictionX.join(yPred) # merges input/output into one dataframe for easy visualization
+        yOverall = yOverall.round(4) #rounds to 4 to avoid floating point imprecision
+        yOverall.to_csv("no_holes_predicted_value.csv", encoding='utf-8', index=False)
+        # exports to csv
+    else:
+        # what output is used for the graph
+        yValidGraph = yValid[outputName].tolist()
+        yPredGraph = yPred[outputName].tolist()
 
-    anisotropyPred = yPred['anisotropy-average'].tolist()
-    volumeFractionPred = yPred['volume-fraction'].tolist()
-    modulusPred = yPred['modulus'].tolist()
-    """
-    # print(anisotropyPred)
+        # below is used for titles and the r2 print
+        normalizedString = ""
+        if normalized:
+            normalizedString = "with normalization"
 
-    # what output is used for the graph
-    yValidGraph = yValid[outputName].tolist()
-    yPredGraph = yPred[outputName].tolist()
+        plt.figure(figsize=(10, 10))
+        plt.scatter(yValidGraph, yPredGraph, color="red", label=f"Comparison between Actual and Predicted Data in {solventName}")
+        plt.legend()
+        plt.grid()
+        plt.title(f"Actual vs Predicted Values for {outputName} in {solventName} {normalizedString}")
+        plt.xlabel("Predicted data")
+        plt.ylabel("Actual data")
+        plt.show()
 
-    # below is used for titles and the r2 print
-    normalizedString = ""
-    if normalized:
-        normalizedString = "with normalization"
-
-    plt.figure(figsize=(10, 10))
-    plt.scatter(yValidGraph, yPredGraph, color="red", label=f"Comparison between Actual and Predicted Data in {solventName}")
-    plt.legend()
-    plt.grid()
-    plt.title(f"Actual vs Predicted Values for {outputName} in {solventName} {normalizedString}")
-    plt.xlabel("Predicted data")
-    plt.ylabel("Actual data")
-    plt.show()
-
-    # r^2, multioutput='raw_values' prints each separately which is what i want
-    r2 = metrics.r2_score(yValid, yPred, multioutput='raw_values')
-    np.around(r2, 5)
-    r2total = metrics.r2_score(yValid, yPred)
-    print(f"R squared score for this data set is {r2} for anisotropy, volume fraction, and modulus respectively in {solventName}")
-    print(f"Overall R squared score for this data set is {r2total} {normalizedString}")
+        # r^2, multioutput='raw_values' prints each separately which is what i want
+        r2 = metrics.r2_score(yValid, yPred, multioutput='raw_values')
+        np.around(r2, 5)
+        r2total = metrics.r2_score(yValid, yPred)
+        print(f"R squared score for this data set is {r2} for anisotropy, volume fraction, and modulus respectively in {solventName}")
+        print(f"Overall R squared score for this data set is {r2total} {normalizedString}")
 
 if __name__ == "__main__":
     # excelData has solvent names, bPointData(boilingPointData) has boiling points
@@ -141,18 +118,18 @@ if __name__ == "__main__":
         if 'NH' in row['anisotropy-average']:
             tempdf = pd.DataFrame([row])
             # print(tempdf.to_string())
-            NHList = pd.concat([NHList, tempdf], ignore_index=True)
+            NHList = pd.concat([NHList, tempdf[tempdf.columns[1:]]], ignore_index=True)
 
     for index, row in bPointData.iterrows():
         if 'NH' in row['anisotropy-average']:
             tempdf = pd.DataFrame([row])
             # print(tempdf.to_string())
-            NHListBoilingPoint = pd.concat([NHList, tempdf], ignore_index=True)
-
+            NHListBoilingPoint = pd.concat([NHListBoilingPoint, tempdf[tempdf.columns[1:]]], ignore_index=True)
 
     excelData = excelData[excelData['anisotropy-average'] != "NH"]
     bPointData = bPointData[bPointData['anisotropy-average'] != "NH"]
 
+    # NH values done removing now
 
     # print(bPointData.to_string())
 
@@ -187,6 +164,7 @@ if __name__ == "__main__":
 
     excelData.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
     bPointData.drop(["polymerization-type"], axis=1, inplace=True)
+    NHListBoilingPoint.drop(['polymerization-type'], axis=1, inplace=True)
 
     nPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
     cycloPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
@@ -201,6 +179,7 @@ if __name__ == "__main__":
     # cast all to float since output columns that had strings are type Object
     excelData = excelData.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
     bPointData = bPointData.astype({'anisotropy-average': float, 'modulus': float, 'volume-fraction': float})
+
     nPentaneList = nPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
     cycloPentaneList = cycloPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
     nHexaneList = nHexaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
@@ -218,4 +197,5 @@ if __name__ == "__main__":
     # third argument is solvent name, doesn't need to be exact it's only used for titling
     # if using bPointData, it uses all solvents
     # last input is whether to normalize or not, default is false so not having a fourth input will have it be falsed
-    forest_regression(bPointData, 'modulus', 'all solvents overall', True)
+    # print(NHListBoilingPoint.to_string())
+    forest_regression(bPointData, 'modulus', 'all solvents overall', predictionList=NHListBoilingPoint)
