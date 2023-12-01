@@ -23,10 +23,6 @@ import inspect
 
 
 def forest_regression(df, outputName, solventName, normalized=False, predictionList=None):
-    # normalized is false by default, if it's true then the data set is modified to be normalized
-    # and the x and y data sets will draw from the normalized set
-    # rest of analysis happens as normal once the sets to be used are acquired
-
     # if predictionList exists, the entire input dataframe will be used to train
     # and prediction will be ran on predictionList
     # else, it will proceed as normal
@@ -36,7 +32,9 @@ def forest_regression(df, outputName, solventName, normalized=False, predictionL
     else:
         testRatio = 0.3 #determining how much of the input list is used to train
 
-
+    # normalized is false by default, if it's true then the data set is modified to be normalized
+    # and the x and y data sets will draw from the normalized set
+    # rest of analysis happens as normal once the sets to be used are acquired
     if normalized:
         dfNormalized = preprocessing.normalize(df, axis=0) # axis=0 means it's done by column
         dfscaled = pd.DataFrame(dfNormalized, columns=df.columns)
@@ -89,10 +87,12 @@ def forest_regression(df, outputName, solventName, normalized=False, predictionL
         plt.ylabel("Actual data")
         plt.show()
 
-        # r^2, multioutput='raw_values' prints each separately which is what i want
+        # r^2, multioutput='raw_values' prints r2 for each output separately
         r2 = metrics.r2_score(yValid, yPred, multioutput='raw_values')
         np.around(r2, 5)
         r2total = metrics.r2_score(yValid, yPred)
+        np.around(r2total, 5)
+
         print(f"R squared score for this data set is {r2} for anisotropy, volume fraction, and modulus respectively in {solventName}")
         print(f"Overall R squared score for this data set is {r2total} {normalizedString}")
 
@@ -131,71 +131,30 @@ if __name__ == "__main__":
 
     # NH values done removing now
 
-    # print(bPointData.to_string())
-
-    # separating input list by solvent
-    # only used for non boiling point data
-    columnNamesNew = excelData.columns
-    nPentaneList = pd.DataFrame(columns=columnNamesNew)
-    cycloPentaneList = pd.DataFrame(columns=columnNamesNew)
-    nHexaneList = pd.DataFrame(columns=columnNamesNew)
-    cycloHexaneList = pd.DataFrame(columns=columnNamesNew)
-    nHeptaneList = pd.DataFrame(columns=columnNamesNew)
-
-    for index, row in excelData.iterrows():
-        if row['solvent'] == 'n-Pentane':
-            tempdf = pd.DataFrame([row])
-            nPentaneList = pd.concat([nPentaneList, tempdf], ignore_index=True)
-        if row['solvent'] == 'cyclopentane':
-            tempdf = pd.DataFrame([row])
-            cycloPentaneList = pd.concat([cycloPentaneList, tempdf], ignore_index=True)
-        if row['solvent'] == 'n-hexane':
-            tempdf = pd.DataFrame([row])
-            nHexaneList = pd.concat([nHexaneList, tempdf], ignore_index=True)
-        if row['solvent'] == 'cyclohexane':
-            tempdf = pd.DataFrame([row])
-            cycloHexaneList = pd.concat([cycloHexaneList, tempdf], ignore_index=True)
-        if row['solvent'] == 'n-heptane':
-            tempdf = pd.DataFrame([row])
-            nHeptaneList = pd.concat([nHeptaneList, tempdf], ignore_index=True)
-
     # drops nonnumeric variables
     # probably a better way to do this to be honest
-
     excelData.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
     bPointData.drop(["polymerization-type"], axis=1, inplace=True)
     NHListBoilingPoint.drop(['polymerization-type'], axis=1, inplace=True)
-
-    nPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
-    cycloPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
-    nHexaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
-    cycloHexaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
-    nHeptaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
-
-
-
-    #print(excelData.to_string())
 
     # cast all to float since output columns that had strings are type Object
     excelData = excelData.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
     bPointData = bPointData.astype({'anisotropy-average': float, 'modulus': float, 'volume-fraction': float})
 
-    nPentaneList = nPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
-    cycloPentaneList = cycloPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
-    nHexaneList = nHexaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
-    cycloHexaneList = cycloHexaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
-    nHeptaneList = nHeptaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
-
     # some modulus values are much smaller than the others
     # this modifies the data to get rid of them for testing
     # comment/uncomment the next line for different analyses--it's optional more or less
     # bPointData = bPointData[(bPointData['modulus']) >= 1]
-    # print(bPointData.to_string())
 
     # second argument is the output to generate a predicted vs actual graph for
     # it needs to exactly match an output column name
     # third argument is solvent name, doesn't need to be exact it's only used for titling
     # if using bPointData, it uses all solvents
-    # last input is whether to normalize or not, default is false so not having a fourth input will have it be falsed
-    # print(NHListBoilingPoint.to_string())
+    # normalized is whether to normalize or not, default is false;
+    # testing says it'll greatly decrease accuracy on anisotropy but slightly improve the other 2 outputs
+    # predictionList, if provided, will run predicted values on its inputs
+    # providing this will not generate a graph or r2 values (they won't be relevant)
     forest_regression(bPointData, 'modulus', 'all solvents overall', predictionList=NHListBoilingPoint)
+
+    # INDIVIDUAL SOLVENT LISTS ARE DEPRECATED
+    # if you really want to use them, find code for separating them in unusedCode.py

@@ -39,3 +39,49 @@
     #roc_auc = auc(false_positive_rate, true_positive_rate)
     #print(f"roc_auc value: {roc_auc}")
     """
+
+# code to separate by solvent
+"""
+# separating input list by solvent
+# only used for non boiling point data
+columnNamesNew = excelData.columns
+nPentaneList = pd.DataFrame(columns=columnNamesNew)
+    cycloPentaneList = pd.DataFrame(columns=columnNamesNew)
+    nHexaneList = pd.DataFrame(columns=columnNamesNew)
+    cycloHexaneList = pd.DataFrame(columns=columnNamesNew)
+    nHeptaneList = pd.DataFrame(columns=columnNamesNew)
+
+    for index, row in excelData.iterrows():
+        if row['solvent'] == 'n-Pentane':
+            tempdf = pd.DataFrame([row])
+            nPentaneList = pd.concat([nPentaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'cyclopentane':
+            tempdf = pd.DataFrame([row])
+            cycloPentaneList = pd.concat([cycloPentaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'n-hexane':
+            tempdf = pd.DataFrame([row])
+            nHexaneList = pd.concat([nHexaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'cyclohexane':
+            tempdf = pd.DataFrame([row])
+            cycloHexaneList = pd.concat([cycloHexaneList, tempdf], ignore_index=True)
+        if row['solvent'] == 'n-heptane':
+            tempdf = pd.DataFrame([row])
+            nHeptaneList = pd.concat([nHeptaneList, tempdf], ignore_index=True)"""
+
+# code to drop nonnumerical inputs from solvent lists
+"""
+nPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    cycloPentaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    nHexaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    cycloHexaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    nHeptaneList.drop(["solvent", "polymerization-type"], axis=1, inplace=True)
+    #print(excelData.to_string())"""
+
+# code to cast all numerical columns to float for solvent lists
+"""
+nPentaneList = nPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    cycloPentaneList = cycloPentaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    nHexaneList = nHexaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    cycloHexaneList = cycloHexaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+    nHeptaneList = nHeptaneList.astype({"anisotropy-average": float, "modulus": float, "volume-fraction": float})
+"""
